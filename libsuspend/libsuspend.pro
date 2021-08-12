@@ -17,7 +17,7 @@ SOURCES = \
 
 INCLUDEPATH = \
     $$PWD/. \
-    $$PWD/include/suspend \
+    $$PWD/include/ \
     $$PWD/base/include
 
 #DEFINES =
