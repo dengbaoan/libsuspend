@@ -22,6 +22,7 @@
 
 #include "autosuspend_ops.h"
 
+#include "stdio.h"
 static struct autosuspend_ops* autosuspend_ops = NULL;
 static bool autosuspend_enabled;
 
@@ -32,11 +33,11 @@ static int autosuspend_init(void) {
 
     autosuspend_ops = autosuspend_wakeup_count_init();
     if (autosuspend_ops == NULL) {
-        ALOGE("failed to initialize autosuspend");
+        /*[dba] ALOGE*/ printf("failed to initialize autosuspend");
         return -1;
     }
 
-    ALOGV("autosuspend initialized");
+    /*[dba] LOG*/  printf("autosuspend initialized");
     return 0;
 }
 
@@ -48,7 +49,7 @@ int autosuspend_enable(void) {
         return ret;
     }
 
-    ALOGV("autosuspend_enable");
+    /*[dba] LOG*/  printf("autosuspend_enable");
 
     if (autosuspend_enabled) {
         return 0;
@@ -71,7 +72,7 @@ int autosuspend_disable(void) {
         return ret;
     }
 
-    ALOGV("autosuspend_disable");
+    /*[dba] LOG*/  printf("autosuspend_disable");
 
     if (!autosuspend_enabled) {
         return 0;
@@ -94,7 +95,7 @@ int autosuspend_force_suspend(int timeout_ms) {
         return ret;
     }
 
-    ALOGV("autosuspend_force_suspend");
+    /*[dba] LOG*/  printf("autosuspend_force_suspend");
 
     return autosuspend_ops->force_suspend(timeout_ms);
 }
@@ -107,7 +108,7 @@ void autosuspend_set_wakeup_callback(void (*func)(bool success)) {
         return;
     }
 
-    ALOGV("set_wakeup_callback");
+    /*[dba] LOG*/  printf("set_wakeup_callback");
 
     autosuspend_ops->set_wakeup_callback(func);
 }

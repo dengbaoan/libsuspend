@@ -32,6 +32,8 @@
 #include <string>
 #include <vector>
 
+#include <QDebug>
+
 #if defined(__APPLE__)
 #include <mach-o/dyld.h>
 #endif
@@ -44,7 +46,7 @@
 #define OS_PATH_SEPARATOR '/'
 #endif
 
-#include "android-base/logging.h"  // and must be after windows.h for ERROR
+// #include "android-base/logging.h"  // and must be after windows.h for ERROR
 #include "android-base/macros.h"   // For TEMP_FAILURE_RETRY on Darwin.
 #include "android-base/unique_fd.h"
 #include "android-base/utf8.h"
@@ -143,7 +145,7 @@ TemporaryDir::~TemporaryDir() {
       case FTW_DP:
       case FTW_DNR:
         if (rmdir(child) == -1) {
-          PLOG(ERROR) << "rmdir " << child;
+         /*[dba] PLOG(ERROR)*/  qDebug() << "rmdir " << child;
         }
         break;
       case FTW_NS:
@@ -155,7 +157,7 @@ TemporaryDir::~TemporaryDir() {
       case FTW_SL:
       case FTW_SLN:
         if (unlink(child) == -1) {
-          PLOG(ERROR) << "unlink " << child;
+         /*[dba] PLOG(ERROR)*/  qDebug() << "unlink " << child;
         }
         break;
     }
@@ -236,22 +238,22 @@ bool WriteStringToFile(const std::string& content, const std::string& path,
               (follow_symlinks ? 0 : O_NOFOLLOW);
   android::base::unique_fd fd(TEMP_FAILURE_RETRY(open(path.c_str(), flags, mode)));
   if (fd == -1) {
-    PLOG(ERROR) << "android::WriteStringToFile open failed";
+   /*[dba] PLOG(ERROR)*/  qDebug() << "android::WriteStringToFile open failed";
     return false;
   }
 
   // We do an explicit fchmod here because we assume that the caller really
   // meant what they said and doesn't want the umask-influenced mode.
   if (fchmod(fd, mode) == -1) {
-    PLOG(ERROR) << "android::WriteStringToFile fchmod failed";
+   /*[dba] PLOG(ERROR)*/  qDebug() << "android::WriteStringToFile fchmod failed";
     return CleanUpAfterFailedWrite(path);
   }
   if (fchown(fd, owner, group) == -1) {
-    PLOG(ERROR) << "android::WriteStringToFile fchown failed";
+   /*[dba] PLOG(ERROR)*/  qDebug() << "android::WriteStringToFile fchown failed";
     return CleanUpAfterFailedWrite(path);
   }
   if (!WriteStringToFd(content, fd)) {
-    PLOG(ERROR) << "android::WriteStringToFile write failed";
+   /*[dba] PLOG(ERROR)*/  qDebug() << "android::WriteStringToFile write failed";
     return CleanUpAfterFailedWrite(path);
   }
   return true;

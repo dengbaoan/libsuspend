@@ -13,7 +13,7 @@ SOURCES = \
    $$PWD/autosuspend.c \
    $$PWD/autosuspend_wakeup_count.cpp \
    $$PWD/base/file.cpp \
-   $$PWD/base/file.cpp
+   $$PWD/base/strings.cpp
 
 INCLUDEPATH = \
     $$PWD/. \

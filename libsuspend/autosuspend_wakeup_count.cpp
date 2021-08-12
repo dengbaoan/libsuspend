@@ -29,10 +29,11 @@
 #include <unistd.h>
 
 #include <android-base/file.h>
-#include <android-base/logging.h>
+// #include <android-base/logging.h>
 #include <android-base/strings.h>
 
 #include "autosuspend_ops.h"
+#include <QDebug>
 
 #define BASE_SLEEP_TIME 100000
 #define MAX_SLEEP_TIME 60000000
@@ -69,30 +70,30 @@ static void* suspend_thread_func(void* arg __attribute__((unused))) {
         update_sleep_time(success);
         usleep(sleep_time);
         success = false;
-        LOG(VERBOSE) << "read wakeup_count";
+       /*[dba] LOG(VERBOSE)*/  qDebug() << "read wakeup_count";
         lseek(wakeup_count_fd, 0, SEEK_SET);
         std::string wakeup_count;
         if (!ReadFdToString(wakeup_count_fd, &wakeup_count)) {
-            PLOG(ERROR) << "error reading from " << sys_power_wakeup_count;
+           /*[dba] PLOG(ERROR)*/  qDebug() << "error reading from " << sys_power_wakeup_count;
             continue;
         }
 
         wakeup_count = Trim(wakeup_count);
         if (wakeup_count.empty()) {
-            LOG(ERROR) << "empty wakeup count";
+           /*[dba] LOG(ERROR)*/  qDebug() <<"empty wakeup count";
             continue;
         }
 
-        LOG(VERBOSE) << "wait";
+       /*[dba] LOG(VERBOSE)*/  qDebug() << "wait";
         int ret = sem_wait(&suspend_lockout);
         if (ret < 0) {
-            PLOG(ERROR) << "error waiting on semaphore";
+           /*[dba] PLOG(ERROR)*/  qDebug() << "error waiting on semaphore";
             continue;
         }
 
-        LOG(VERBOSE) << "write " << wakeup_count << " to wakeup_count";
+       /*[dba] LOG(VERBOSE)*/  qDebug() << "write " << wakeup_count.c_str() << " to wakeup_count";
         if (WriteStringToFd(wakeup_count, wakeup_count_fd)) {
-            LOG(VERBOSE) << "write " << sleep_state << " to " << sys_power_state;
+           /*[dba] LOG(VERBOSE)*/  qDebug() << "write " << sleep_state << " to " << sys_power_state;
             success = WriteStringToFd(sleep_state, state_fd);
 
             void (*func)(bool success) = wakeup_func;
@@ -100,13 +101,13 @@ static void* suspend_thread_func(void* arg __attribute__((unused))) {
                 (*func)(success);
             }
         } else {
-            PLOG(ERROR) << "error writing to " << sys_power_wakeup_count;
+           /*[dba] PLOG(ERROR)*/  qDebug() << "error writing to " << sys_power_wakeup_count;
         }
 
-        LOG(VERBOSE) << "release sem";
+       /*[dba] LOG(VERBOSE)*/  qDebug() << "release sem";
         ret = sem_post(&suspend_lockout);
         if (ret < 0) {
-            PLOG(ERROR) << "error releasing semaphore";
+           /*[dba] PLOG(ERROR)*/  qDebug() << "error releasing semaphore";
         }
     }
     return NULL;
@@ -119,12 +120,12 @@ static int init_state_fd(void) {
 
     int fd = TEMP_FAILURE_RETRY(open(sys_power_state, O_CLOEXEC | O_RDWR));
     if (fd < 0) {
-        PLOG(ERROR) << "error opening " << sys_power_state;
+       /*[dba] PLOG(ERROR)*/  qDebug() << "error opening " << sys_power_state;
         return -1;
     }
 
     state_fd = fd;
-    LOG(INFO) << "init_state_fd success";
+   /*[dba] LOG(INFO)*/  qDebug() <<"init_state_fd success";
     return 0;
 }
 
@@ -140,23 +141,23 @@ static int autosuspend_init(void) {
 
     wakeup_count_fd = TEMP_FAILURE_RETRY(open(sys_power_wakeup_count, O_CLOEXEC | O_RDWR));
     if (wakeup_count_fd < 0) {
-        PLOG(ERROR) << "error opening " << sys_power_wakeup_count;
+       /*[dba] PLOG(ERROR)*/  qDebug() << "error opening " << sys_power_wakeup_count;
         goto err_open_wakeup_count;
     }
 
     ret = sem_init(&suspend_lockout, 0, 0);
     if (ret < 0) {
-        PLOG(ERROR) << "error creating suspend_lockout semaphore";
+       /*[dba] PLOG(ERROR)*/  qDebug() << "error creating suspend_lockout semaphore";
         goto err_sem_init;
     }
 
     ret = pthread_create(&suspend_thread, NULL, suspend_thread_func, NULL);
     if (ret) {
-        LOG(ERROR) << "error creating thread: " << strerror(ret);
+       /*[dba] LOG(ERROR)*/  qDebug() <<"error creating thread: " << strerror(ret);
         goto err_pthread_create;
     }
 
-    LOG(VERBOSE) << "autosuspend_init success";
+   /*[dba] LOG(VERBOSE)*/  qDebug() << "autosuspend_init success";
     autosuspend_is_init = true;
     return 0;
 
@@ -169,26 +170,26 @@ err_open_wakeup_count:
 }
 
 static int autosuspend_wakeup_count_enable(void) {
-    LOG(VERBOSE) << "autosuspend_wakeup_count_enable";
+   /*[dba] LOG(VERBOSE)*/  qDebug() << "autosuspend_wakeup_count_enable";
 
     int ret = autosuspend_init();
     if (ret < 0) {
-        LOG(ERROR) << "autosuspend_init failed";
+       /*[dba] LOG(ERROR)*/  qDebug() <<"autosuspend_init failed";
         return ret;
     }
 
     ret = sem_post(&suspend_lockout);
     if (ret < 0) {
-        PLOG(ERROR) << "error changing semaphore";
+       /*[dba] PLOG(ERROR)*/  qDebug() << "error changing semaphore";
     }
 
-    LOG(VERBOSE) << "autosuspend_wakeup_count_enable done";
+   /*[dba] LOG(VERBOSE)*/  qDebug() << "autosuspend_wakeup_count_enable done";
 
     return ret;
 }
 
 static int autosuspend_wakeup_count_disable(void) {
-    LOG(VERBOSE) << "autosuspend_wakeup_count_disable";
+   /*[dba] LOG(VERBOSE)*/  qDebug() << "autosuspend_wakeup_count_disable";
 
     if (!autosuspend_is_init) {
         return 0;  // always successful if no thread is running yet
@@ -197,16 +198,16 @@ static int autosuspend_wakeup_count_disable(void) {
     int ret = sem_wait(&suspend_lockout);
 
     if (ret < 0) {
-        PLOG(ERROR) << "error changing semaphore";
+       /*[dba] PLOG(ERROR)*/  qDebug() << "error changing semaphore";
     }
 
-    LOG(VERBOSE) << "autosuspend_wakeup_count_disable done";
+   /*[dba] LOG(VERBOSE)*/  qDebug() << "autosuspend_wakeup_count_disable done";
 
     return ret;
 }
 
 static int force_suspend(int timeout_ms) {
-    LOG(VERBOSE) << "force_suspend called with timeout: " << timeout_ms;
+   /*[dba] LOG(VERBOSE)*/  qDebug() << "force_suspend called with timeout: " << timeout_ms;
 
     int ret = init_state_fd();
     if (ret < 0) {
@@ -218,7 +219,7 @@ static int force_suspend(int timeout_ms) {
 
 static void autosuspend_set_wakeup_callback(void (*func)(bool success)) {
     if (wakeup_func != NULL) {
-        LOG(ERROR) << "duplicate wakeup callback applied, keeping original";
+       /*[dba] LOG(ERROR)*/  qDebug() <<"duplicate wakeup callback applied, keeping original";
         return;
     }
     wakeup_func = func;
